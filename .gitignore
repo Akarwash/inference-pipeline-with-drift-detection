@@ -1,0 +1,7 @@
+venv/
+__pycache__/
+*.pyc
+models/model.joblib
+models/reference_data.npz
+models/metadata.json
+.DS_Store
