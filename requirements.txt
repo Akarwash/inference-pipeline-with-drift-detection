@@ -1,0 +1,7 @@
+confluent-kafka
+numpy
+scikit-learn
+scipy
+joblib
+psycopg2-binary
+prometheus-client
