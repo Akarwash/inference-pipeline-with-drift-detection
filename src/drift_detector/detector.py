@@ -39,6 +39,7 @@ alerts_fired = Counter("drift_alerts_total", "Drift alerts fired", ["feature", "
 ks_score_gauge = Gauge("drift_ks_score", "KS statistic per feature", ["feature"])
 psi_score_gauge = Gauge("drift_psi_score", "PSI score per feature", ["feature"])
 
+
 def compute_psi(reference, current, bins=PSI_NUM_BINS):
     min_val = min(reference.min(), current.min())
     max_val = max(reference.max(), current.max())
@@ -53,11 +54,13 @@ def compute_psi(reference, current, bins=PSI_NUM_BINS):
     psi = np.sum((cur_pct - ref_pct) * np.log(cur_pct / ref_pct))
     return float(psi)
 
+
 def load_reference_data(path):
     data = np.load(path)
     X_ref = data["X"]
     logger.info("Loaded reference data: %s", X_ref.shape)
     return X_ref
+
 
 def run():
     start_http_server(METRICS_PORT)
@@ -82,6 +85,7 @@ def run():
         "Drift detector started. Window=%d, check every %d events, KS threshold=%.3f, PSI threshold=%.3f",
         WINDOW_SIZE, CHECK_INTERVAL_EVENTS, KS_THRESHOLD, PSI_THRESHOLD,
     )
+
     try:
         while True:
             msg = consumer.poll(timeout=1.0)
@@ -99,6 +103,7 @@ def run():
             vec = [features[name] for name in FEATURE_NAMES]
             window.append(vec)
             events_since_last_check += 1
+
             if events_since_last_check >= CHECK_INTERVAL_EVENTS and len(window) >= WINDOW_SIZE // 2:
                 events_since_last_check = 0
                 checks_performed.inc()
@@ -132,13 +137,14 @@ def run():
 
                     if feature_drift:
                         drift_details[feat_name] = feature_drift
-                    if drift_found:
-                        alert = {
-                            "alert_type": "data_drift",
-                            "timestamp": record["timestamp"],
-                            "window_size": len(window),
-                            "drifted_features": drift_details,
-                        }
+
+                if drift_found:
+                    alert = {
+                        "alert_type": "data_drift",
+                        "timestamp": record["timestamp"],
+                        "window_size": len(window),
+                        "drifted_features": drift_details,
+                    }
                     producer.produce(
                         topic=TOPIC_DRIFT_ALERTS,
                         value=json.dumps(alert).encode(),
@@ -147,6 +153,7 @@ def run():
                     logger.warning("DRIFT DETECTED: %s", json.dumps(drift_details, indent=2))
                 else:
                     logger.info("Drift check passed - no drift detected.")
+
     except KeyboardInterrupt:
         logger.info("Shutting down drift detector...")
     finally:
