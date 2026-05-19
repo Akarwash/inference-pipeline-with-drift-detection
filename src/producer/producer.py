@@ -13,7 +13,7 @@ from prometheus_client import Counter, start_http_server
 KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9094")
 TOPIC = "raw-events"
 EVENTS_PER_SECOND = int(os.getenv("EVENTS_PER_SECOND", "10"))
-DRIFT_AFTER_N_EVENTS = int(os.getenv("DRIFT_AFTER_N_EVENTS", "5000"))
+DRIFT_AFTER_N_EVENTS = int(os.getenv("DRIFT_AFTER_N_EVENTS", "500"))
 METRICS_PORT = int(os.getenv("METRICS_PORT", "8000"))
 
 
