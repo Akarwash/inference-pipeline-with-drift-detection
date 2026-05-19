@@ -10,7 +10,7 @@ TOPIC_DRIFT_ALERTS = "drift-alerts"
 # PostgreSQL
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql://pipeline:pipeline_pass@localhost:5432/predictions_db",
+    "postgresql://pipeline:pipeline_pass@localhost:5433/predictions_db",
 )
 
 # Model
