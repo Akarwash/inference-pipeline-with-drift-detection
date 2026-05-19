@@ -50,7 +50,7 @@ services:
     volumes:
       - ./configs/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: pg_isready -U pipeline
+      test: pg_isready -U pipeline -d predictions_db
       interval: 5s
       timeout: 3s
       retries: 5
@@ -72,3 +72,62 @@ services:
       GF_SECURITY_ADMIN_PASSWORD: admin
     volumes:
       - ./configs/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
+  
+  producer:
+    build:
+      context: .
+      dockerfile: Dockerfile.producer
+    container_name: producer
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      EVENTS_PER_SECOND: "10"
+      DRIFT_AFTER_N_EVENTS: "5000"
+    ports:
+      - "8000:8000"
+
+  inference-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.inference
+    container_name: inference-worker
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      MODEL_PATH: models/model.joblib
+    ports:
+      - "8001:8001"
+
+  db-writer:
+    build:
+      context: .
+      dockerfile: Dockerfile.dbwriter
+    container_name: db-writer
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      DATABASE_URL: postgresql://pipeline:pipeline_pass@postgres:5432/predictions_db
+    ports:
+      - "8002:8002"
+
+  drift-detector:
+    build:
+      context: .
+      dockerfile: Dockerfile.drift
+    container_name: drift-detector
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      REFERENCE_DATA_PATH: models/reference_data.npz
+    ports:
+      - "8003:8003"

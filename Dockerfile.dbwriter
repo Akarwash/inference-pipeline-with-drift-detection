@@ -1,0 +1,7 @@
+FROM python:3.12-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY src/config.py src/config.py
+COPY src/db_writer/ src/db_writer/
+CMD ["python", "src/db_writer/writer.py"]
